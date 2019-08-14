@@ -1,0 +1,73 @@
+import numpy as np
+import cv2
+
+def iou_for_semantic_class(target_color_channel, inferenced_color_channel):
+    intersection = np.logical_and(target_color_channel, inferenced_color_channel)
+    union = np.logical_or(target_color_channel, inferenced_color_channel)
+    return np.sum(intersection) / np.sum(union)
+
+
+def acc_for_semantic_class(target_color_channel, inferenced_color_channel):
+    true_pos = np.logical_and(target_color_channel, inferenced_color_channel)
+    true_neg = np.logical_and(np.logical_not(target_color_channel), np.logical_not(inferenced_color_channel))
+    h, w = target_color_channel.shape
+    return (np.sum(true_pos) + np.sum(true_neg)) / (h * w)
+
+
+def calc_acc_rgb(img_1, img_2):
+    b = acc_for_semantic_class(img_1[:, :, 0], img_2[:, :, 0])
+    g = acc_for_semantic_class(img_1[:, :, 1], img_2[:, :, 1])
+    r = acc_for_semantic_class(img_1[:, :, 2], img_2[:, :, 2])
+    return r, g, b
+
+
+def calc_iou_rgb(img_1, img_2):
+    b = iou_for_semantic_class(img_1[:, :, 0], img_2[:, :, 0])
+    g = iou_for_semantic_class(img_1[:, :, 1], img_2[:, :, 1])
+    r = iou_for_semantic_class(img_1[:, :, 2], img_2[:, :, 2])
+    return r, g, b
+
+
+def preprocess_inference(inf, threshhold):
+    _, b = cv2.threshold(inf[:, :, 0], threshhold, 255, cv2.THRESH_BINARY)
+    _, g = cv2.threshold(inf[:, :, 1], threshhold, 255, cv2.THRESH_BINARY)
+    _, r = cv2.threshold(inf[:, :, 2], threshhold, 255, cv2.THRESH_BINARY)
+    inf[:, :, 0] = b
+    inf[:, :, 1] = g
+    inf[:, :, 2] = r
+    return inf
+
+
+def precision4channel(gt, inf):
+    true_pos = np.logical_and(gt, inf)
+    predicted_cond_pos = np.sum(inf)
+    return true_pos / predicted_cond_pos
+
+
+def precision_rgb(gt, inf):
+    b = precision4channel(gt[:, :, 0], inf[:, :, 0])
+    g = precision4channel(gt[:, :, 1], inf[:, :, 1])
+    r = precision4channel(gt[:, :, 2], inf[:, :, 2])
+    return r, g, b
+
+
+def recall4channel(gt, inf):
+    true_pos = np.logical_and(gt, inf)
+    cond_pos = np.sum(gt)
+    return true_pos / cond_pos
+
+
+def recall_rgb(gt, inf):
+    b = recall4channel(gt[:, :, 0], inf[:, :, 0])
+    g = recall4channel(gt[:, :, 1], inf[:, :, 1])
+    r = recall4channel(gt[:, :, 2], inf[:, :, 2])
+    return r, g, b
+
+
+def f1score_rgb(gt, inf):
+    rr, rg, rb = recall_rgb(gt, inf)
+    pr, pg, pb = precision_rgb(gt, inf)
+    f1r = 2.0 * pr * rr / (pr + rr)
+    f1g = 2.0 * pg * rg / (pg + rg)
+    f1b = 2.0 * pb * rb / (pb + rb)
+    return  f1r, f1g, f1b

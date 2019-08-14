@@ -1,34 +1,14 @@
 import cv2
-import numpy as np
+import matplotlib
+from diagnostics import calc_iou_rgb, calc_acc_rgb, preprocess_inference, recall_rgb, precision_rgb, f1score_rgb
 
 
-def iou_for_semantic_class(target_color_channel, inferenced_color_channel):
-    intersection = np.logical_and(target_color_channel, inferenced_color_channel)
-    union = np.logical_or(target_color_channel, inferenced_color_channel)
-    return np.sum(intersection) / np.sum(union)
 
 
-def calc_iou_rgb(img_1, img_2):
-    b = iou_for_semantic_class(img_1[:, :, 0], img_2[:, :, 0])
-    g = iou_for_semantic_class(img_1[:, :, 1], img_2[:, :, 1])
-    r = iou_for_semantic_class(img_1[:, :, 2], img_2[:, :, 2])
-    return r, g, b
-
-
-def process_inf(inf, threshhold):
-    _, b = cv2.threshold(inf[:, :, 0], threshhold, 255, cv2.THRESH_BINARY)
-    _, g = cv2.threshold(inf[:, :, 1], threshhold, 255, cv2.THRESH_BINARY)
-    _, r = cv2.threshold(inf[:, :, 2], threshhold, 255, cv2.THRESH_BINARY)
-    inf[:, :, 0] = b
-    inf[:, :, 1] = g
-    inf[:, :, 2] = r
-    return inf
-
-
-def print2img(img, text):
+def print2img(img, text, position):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    bottomLeftCornerOfText = (10, 500)
+    bottomLeftCornerOfText = position
     fontScale = 1
     fontColor = (255, 255, 255)
     lineType = 2
@@ -49,14 +29,14 @@ def process_image(base_dir, inf_dir, label_dir, img_dir, i):
 
     inf_label = cv2.resize(inf_label, (1024, 256))
 
-    h, w, c = gt_label.shape
+    h, w, _ = gt_label.shape
     if h > 256 and w > 1024:
         gt_label = gt_label[(h - 256):h, ((w - 1024) // 2): (w - (w - 1024) // 2)]
         rgb_img = rgb_img[(h - 256):h, ((w - 1024) // 2): (w - (w - 1024) // 2)]
     else:
         gt_label = gt_label
 
-    inf_label_proc = process_inf(inf_label, threshhold = 127)
+    inf_label_proc = preprocess_inference(inf_label, threshhold = 127)
 
     vis_gt = cv2.addWeighted(gt_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)
     vis_label = cv2.addWeighted(inf_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)
@@ -65,7 +45,7 @@ def process_image(base_dir, inf_dir, label_dir, img_dir, i):
 
     iou = calc_iou_rgb(gt_label, inf_label_proc)
 
-    inf_bgr = process_inf(inf_label, threshhold = 50)
+    inf_bgr = inf_label #preprocess_inference(inf_label, threshhold = 127)
 
     h, w, _ = gt_label.shape
 
@@ -79,9 +59,11 @@ def process_image(base_dir, inf_dir, label_dir, img_dir, i):
 
     amount = sum / num
 
-    text = 'IoU r: %.2f, b: %.2f, g: %.2f        |      g_amount: %.2f' % (iou[0], iou[2], iou[1], amount)
+    text = 'IoU r: %.2f, b: %.2f, g: %.2f      |      g_amount: %.2f' % (iou[0], iou[2], iou[1], amount)
+    text_acc = 'Acc r: %.2f, b: %.2f, g: %.2f' % calc_acc_rgb(gt_label, inf_bgr)
 
-    vis = print2img(vis, text)
+    vis = print2img(vis, text, position = (10, 500))
+    vis = print2img(vis, text_acc, position = (10, 460))
 
     winname = 'concat'
     cv2.imshow(winname, vis)
@@ -99,7 +81,6 @@ def main():
 
     for k in range(0, 4000):
         iou, amount = process_image(base_dir = base_dir, label_dir = label_dir, inf_dir = inf_dir, img_dir = img_dir, i = k)
-        print(iou[1])
 
 
 if __name__ == "__main__":
