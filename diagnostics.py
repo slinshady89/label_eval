@@ -100,12 +100,11 @@ def colour_quota_rgb(img):
 
 def calc_best_th(por_3C):
     best_th = np.zeros(3)
-    biggest_area = np.zeros(3)
+    best_por = np.zeros(3)
     for i, vals in enumerate(por_3C):
-        for channel in vals:
-            area = vals[channel, 0] * vals[channel, 1]
-            if area[channel] > biggest_area[channel]:
-                best_th[channel] = i
-                biggest_area[channel] = area[channel]
-    print(best_th)
-    print(biggest_area)
+        for k, (precision, recall) in enumerate(vals):
+            por = precision * recall
+            if por > best_por[k]:
+                best_th[k] = i
+                best_por[k] = por
+    return best_th, best_por
