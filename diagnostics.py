@@ -7,6 +7,8 @@ import cv2
 def iou_for_semantic_class(target_color_channel, inferenced_color_channel):
     intersection = np.logical_and(target_color_channel, inferenced_color_channel)
     union = np.logical_or(target_color_channel, inferenced_color_channel)
+    if union == 0.0:
+        return 0.0
     return np.sum(intersection) / np.sum(union)
 
 
