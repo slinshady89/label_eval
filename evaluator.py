@@ -44,7 +44,7 @@ class Evaluator(object):
         if self.b_show_image_:
             quota_inf = colour_quota_rgb(gt_label)
             iou = iou_rgb(gt_label, inf_label_proc)
-            self.show_image(rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf)
+            self.show_images(rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf)
 
         return [[precision[0], recall[0], quota_gt[0]],
                 [precision[1], recall[1], quota_gt[1]],
@@ -66,7 +66,7 @@ class Evaluator(object):
         # print('threshold %d done by pid: %d' % (th, getpid()))
         q.put(por)
 
-    def show_image(self, rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf):
+    def show_images(self, rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf):
         vis_gt = cv2.addWeighted(gt_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)
         vis_label = cv2.addWeighted(inf_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)
 
