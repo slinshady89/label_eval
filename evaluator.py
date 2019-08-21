@@ -1,11 +1,10 @@
 import numpy as np
-import multiprocessing
 import cv2
-from os import getpid
 from drawing import print2img
 
 from diagnostics import iou_rgb, acc_rgb, preprocess_inference, recall_rgb, precision_rgb, f1score_rgb, \
-    colour_quota_rgb, calc_best_th
+    colour_quota_rgb
+
 
 ## Evaluator for inferences of KITTI data structure
 # sequences/XX/
