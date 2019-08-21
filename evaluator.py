@@ -7,7 +7,11 @@ from drawing import print2img
 from diagnostics import iou_rgb, acc_rgb, preprocess_inference, recall_rgb, precision_rgb, f1score_rgb, \
     colour_quota_rgb, calc_best_th
 
-
+## Evaluator for inferences of KITTI data structure
+# sequences/XX/
+# ---|image_2/xxxxxx.png
+# ---|inference/xxxxxx.png
+# ---|gt_labels/xxxxxx.png
 class Evaluator(object):
     def __init__(self, _base_dir, _img_dir, _inf_label_dir, _gt_label_dir,
                  _lower_bound, _num_img, _b_show_image = False):
