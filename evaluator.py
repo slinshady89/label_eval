@@ -21,14 +21,15 @@ class Evaluator(object):
         self.lower_bound_ = _lower_bound
         self.num_img_ = _num_img
         self.b_show_image_ = _b_show_image
-        self.threshold_ = np.array((69, 75, 110), dtype = np.int).resize(3, 1)
+        self.threshold_ = np.array((69, 75, 110), dtype = np.int)
 
-    def process_image(self, i, _threshold):
+    def process_image(self, i):
+        print('in process_image',  i)
         inf_label = cv2.imread(self.base_dir_ + self.inf_label_dir_ + '%06d.png' % i)
         gt_label = cv2.imread(self.base_dir_ + self.gt_label_dir_ + '%06d.png' % i)
         # gt_label = cv2.imread(base_dir + label_dir + '%06d.png' % i)
         rgb_img = cv2.imread(self.base_dir_ + self.img_dir_ + '%06d.png' % i)
-
+        prec_rec_qut = np.zeros((3, 3), dtype = np.float)
         inf_label = cv2.resize(inf_label, (1024, 256))
 
         h, w, _ = gt_label.shape
@@ -38,7 +39,7 @@ class Evaluator(object):
         else:
             gt_label = gt_label
 
-        inf_label_proc = preprocess_inference(inf = inf_label, threshold = _threshold)
+        inf_label_proc = preprocess_inference(inf = inf_label, threshold = self.threshold_)
 
         quota_gt = colour_quota_rgb(gt_label)
         recall = recall_rgb(gt_label, inf_label_proc)
@@ -49,15 +50,23 @@ class Evaluator(object):
             iou = iou_rgb(gt_label, inf_label_proc)
             self.show_images(rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf)
 
-        return [[precision[0], recall[0], quota_gt[0]],
-                [precision[1], recall[1], quota_gt[1]],
-                [precision[2], recall[2], quota_gt[2]]]
+        prec_rec_qut = [[precision[0], recall[0], quota_gt[0]],
+                        [precision[1], recall[1], quota_gt[1]],
+                        [precision[2], recall[2], quota_gt[2]]]
+        return prec_rec_qut
+
+    def process_batch(self, q, begin, batch_size):
+        prq = np.zeros((batch_size, 3, 3), dtype = np.float)
+        for i in range(begin, begin + batch_size):
+            print(i - begin)
+            prq[i - begin] = self.process_image(i)
+        q.put(prq)
 
     def process_images(self, th, q):
         # print('evaluating %d images on threshold %d with pid %d' % (num_img - lower_bound, th, getpid()))
         PrecisionOverRecall = np.zeros((self.num_img_, 3, 3), dtype = np.float)
-        for k in range(self.lower_bound_, self.num_img_):
-            PrecisionOverRecall[k] = self.process_image(i = k, _threshold = th)
+        # for k in range(self.lower_bound_, self.num_img_):
+        #     PrecisionOverRecall[k] = self.process_image(i = k, q)
         por = np.zeros((3, 2), dtype = np.float)
         # calculates the mean of Precisions and Recall's over all images for each color channel and returns them without
         # colour quota

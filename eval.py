@@ -18,6 +18,10 @@ num_img = 100
 lower_bound = 0
 
 
+def chunks(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
 def main():
 
     evaluator = Evaluator(base_dir, img_dir, inf_dir, label_dir, lower_bound, num_img)
@@ -27,50 +31,59 @@ def main():
 
     q = multiprocessing.Queue()
 
-    for th in range(50, 70):
-        p = multiprocessing.Process(target = evaluator.process_images, args = (th, q))
-        jobs.append([p, th])
+    prq = np.zeros((1000, 3, 3), dtype = np.float)
+
+    num_max_threads = 40
+    batch_size = 10
+    for i in range(0, 100, batch_size):
+        p = multiprocessing.Process(target = evaluator.process_batch, args = (q, i, batch_size))
+        print(i)
+        # if i == 0:
+        #     jobs.append([p, i])
+        # else:
+        jobs.append([p, i])
         p.start()
 
     for i, job in enumerate(jobs):
-        print(job)
         ret = q.get()
-        prec_over_rec[job[1]] = ret
+        prq[job[1]:job[1] + batch_size] = ret
 
     for job in jobs:
         job[0].join()
 
-    with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_green.txt', "w") as f:
-        np.savetxt(f, prec_over_rec[:, 1], fmt = '%2.6f')
-    with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_red.txt', "w") as f:
-        np.savetxt(f, prec_over_rec[:, 2], fmt = '%2.6f')
-    with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_blue.txt', "w") as f:
-        np.savetxt(f, prec_over_rec[:, 0], fmt = '%2.6f')
+    print(prq)
 
-    f.close()
+    # with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_green.txt', "w") as f:
+    #     np.savetxt(f, prec_over_rec[:, 1], fmt = '%2.6f')
+    # with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_red.txt', "w") as f:
+    #     np.savetxt(f, prec_over_rec[:, 2], fmt = '%2.6f')
+    # with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_blue.txt', "w") as f:
+    #     np.savetxt(f, prec_over_rec[:, 0], fmt = '%2.6f')
+
+    # f.close()
 
     with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por.txt', "r") as f:
         test_read = np.loadtxt(f)
 
-    th_best, por_best = calc_best_th(prec_over_rec)
-    print('BEST:')
-    print(th_best)
-    print(por_best)
-
-    pyplot.plot(prec_over_rec[:, 0, 1], prec_over_rec[:, 0, 0], linestyle = 'None',
-                marker = '.', markersize = 1.5, color = 'b')
-    pyplot.plot(prec_over_rec[:, 1, 1], prec_over_rec[:, 1, 0], linestyle = 'None',
-                marker = '.', markersize = 1.5, color = 'g')
-    pyplot.plot(prec_over_rec[:, 2, 1], prec_over_rec[:, 2, 0], linestyle = 'None',
-                marker = '.', markersize = 1.5, color = 'r')
-    pyplot.xlabel('Recall')
-    pyplot.ylabel('Precision')
-    pyplot.ylim(0, 1)
-    pyplot.xlim(0, 1)
-    pyplot.grid(b = True)
-    pyplot.title('Means of Precision and Recall over all images for thresholds = [0, 255]')
-
-    pyplot.show()
+    # th_best, por_best = calc_best_th(prec_over_rec)
+    # print('BEST:')
+    # print(th_best)
+    # print(por_best)
+    #
+    # pyplot.plot(prec_over_rec[:, 0, 1], prec_over_rec[:, 0, 0], linestyle = 'None',
+    #             marker = '.', markersize = 1.5, color = 'b')
+    # pyplot.plot(prec_over_rec[:, 1, 1], prec_over_rec[:, 1, 0], linestyle = 'None',
+    #             marker = '.', markersize = 1.5, color = 'g')
+    # pyplot.plot(prec_over_rec[:, 2, 1], prec_over_rec[:, 2, 0], linestyle = 'None',
+    #             marker = '.', markersize = 1.5, color = 'r')
+    # pyplot.xlabel('Recall')
+    # pyplot.ylabel('Precision')
+    # pyplot.ylim(0, 1)
+    # pyplot.xlim(0, 1)
+    # pyplot.grid(b = True)
+    # pyplot.title('Means of Precision and Recall over all images for thresholds = [0, 255]')
+    #
+    # pyplot.show()
 
 
 if __name__ == "__main__":

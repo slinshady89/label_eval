@@ -34,9 +34,9 @@ def iou_rgb(img_1, img_2):
 
 
 def preprocess_inference(inf, threshold):
-    _, b = cv2.threshold(inf[:, :, 0], threshold, 255, cv2.THRESH_BINARY)
-    _, g = cv2.threshold(inf[:, :, 1], threshold, 255, cv2.THRESH_BINARY)
-    _, r = cv2.threshold(inf[:, :, 2], threshold, 255, cv2.THRESH_BINARY)
+    _, b = cv2.threshold(inf[:, :, 0], threshold[0], 255, cv2.THRESH_BINARY)
+    _, g = cv2.threshold(inf[:, :, 1], threshold[1], 255, cv2.THRESH_BINARY)
+    _, r = cv2.threshold(inf[:, :, 2], threshold[2], 255, cv2.THRESH_BINARY)
     inf[:, :, 0] = b
     inf[:, :, 1] = g
     inf[:, :, 2] = r
