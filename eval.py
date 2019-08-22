@@ -31,13 +31,12 @@ def main():
 
     q = multiprocessing.Queue()
 
-    prq = np.zeros((1000, 3, 3), dtype = np.float)
 
     num_max_threads = 40
-    batch_size = 10
-    for i in range(0, 100, batch_size):
+    batch_size = 100
+    prq = np.zeros((4000, 3, 3), dtype = np.float)
+    for i in range(0, 4000, batch_size):
         p = multiprocessing.Process(target = evaluator.process_batch, args = (q, i, batch_size))
-        print(i)
         # if i == 0:
         #     jobs.append([p, i])
         # else:
@@ -48,10 +47,10 @@ def main():
         ret = q.get()
         prq[job[1]:job[1] + batch_size] = ret
 
+    print(ret.shape)
     for job in jobs:
         job[0].join()
 
-    print(prq)
 
     # with open('/media/localadmin/BigBerta/11Nils/kitti/dataset/sequences/Data/por_green.txt', "w") as f:
     #     np.savetxt(f, prec_over_rec[:, 1], fmt = '%2.6f')

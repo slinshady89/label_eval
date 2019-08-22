@@ -24,7 +24,6 @@ class Evaluator(object):
         self.threshold_ = np.array((69, 75, 110), dtype = np.int)
 
     def process_image(self, i):
-        print('in process_image',  i)
         inf_label = cv2.imread(self.base_dir_ + self.inf_label_dir_ + '%06d.png' % i)
         gt_label = cv2.imread(self.base_dir_ + self.gt_label_dir_ + '%06d.png' % i)
         # gt_label = cv2.imread(base_dir + label_dir + '%06d.png' % i)
@@ -58,7 +57,7 @@ class Evaluator(object):
     def process_batch(self, q, begin, batch_size):
         prq = np.zeros((batch_size, 3, 3), dtype = np.float)
         for i in range(begin, begin + batch_size):
-            print(i - begin)
+            print('processing image %d' % i)
             prq[i - begin] = self.process_image(i)
         q.put(prq)
 
