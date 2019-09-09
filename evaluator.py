@@ -12,29 +12,22 @@ from diagnostics import iou_rgb, acc_rgb, preprocess_inference, recall_rgb, prec
 # ---|inference/xxxxxx.png
 # ---|gt_labels/xxxxxx.png
 class Evaluator(object):
-    def __init__(self, _base_dir, _img_dir, _inf_label_dir, _gt_label_dir,
-                 _lower_bound, _num_img, _b_show_image = False):
+    def __init__(self, _base_dir, _img_dir, _inf_label_dir, _gt_label_dir, _eval_list):
         self.base_dir_ = _base_dir
         self.img_dir_ = _img_dir
         self.inf_label_dir_ = _inf_label_dir
         self.gt_label_dir_ = _gt_label_dir
-        self.lower_bound_ = _lower_bound
-        self.num_img_ = _num_img
-        self.b_show_image_ = _b_show_image
+        self.eval_list = _eval_list
         self.threshold_ = np.array((69, 75, 110), dtype = np.int)
 
     def process_image(self, i):
-        inf_label = cv2.imread(self.base_dir_ + self.inf_label_dir_ + '%06d.png' % i)
-        gt_label = cv2.imread(self.base_dir_ + self.gt_label_dir_ + '%06d.png' % i)
-        # gt_label = cv2.imread(base_dir + label_dir + '%06d.png' % i)
-        rgb_img = cv2.imread(self.base_dir_ + self.img_dir_ + '%06d.png' % i)
-        prec_rec_qut = np.zeros((3, 3), dtype = np.float)
+        inf_label = cv2.imread(self.base_dir_ + self.inf_label_dir_ + self.eval_list[i])
+        gt_label = cv2.imread(self.base_dir_ + self.gt_label_dir_ + self.eval_list[i])
         inf_label = cv2.resize(inf_label, (1024, 256))
 
         h, w, _ = gt_label.shape
         if h > 256 and w > 1024:
             gt_label = gt_label[(h - 256):h, ((w - 1024) // 2): (w - (w - 1024) // 2)]
-            rgb_img = rgb_img[(h - 256):h, ((w - 1024) // 2): (w - (w - 1024) // 2)]
         else:
             gt_label = gt_label
 
@@ -43,11 +36,6 @@ class Evaluator(object):
         quota_gt = colour_quota_rgb(gt_label)
         recall = recall_rgb(gt_label, inf_label_proc)
         precision = precision_rgb(gt_label, inf_label_proc)
-
-        if self.b_show_image_:
-            quota_inf = colour_quota_rgb(gt_label)
-            iou = iou_rgb(gt_label, inf_label_proc)
-            self.show_images(rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf)
 
         prec_rec_qut = [[precision[0], recall[0], quota_gt[0]],
                         [precision[1], recall[1], quota_gt[1]],
@@ -61,21 +49,21 @@ class Evaluator(object):
             prq[i - begin] = self.process_image(i)
         q.put(prq)
 
-    def process_images(self, th, q):
-        # print('evaluating %d images on threshold %d with pid %d' % (num_img - lower_bound, th, getpid()))
-        PrecisionOverRecall = np.zeros((self.num_img_, 3, 3), dtype = np.float)
-        # for k in range(self.lower_bound_, self.num_img_):
-        #     PrecisionOverRecall[k] = self.process_image(i = k, q)
-        por = np.zeros((3, 2), dtype = np.float)
-        # calculates the mean of Precisions and Recall's over all images for each color channel and returns them without
-        # colour quota
-        por[0, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 0], axis = 0)[0:2]
-        por[2, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 2], axis = 0)[0:2]
-        # for the green channel the precision and recall is only estimated for images where the green quota is
-        # larger than 7% (value estimated by a scatter plot)
-        por[1, :] = np.mean(PrecisionOverRecall[PrecisionOverRecall[:, 1, 2] > 0.07, 1], axis = 0)[0:2]
-        # print('threshold %d done by pid: %d' % (th, getpid()))
-        q.put(por)
+    # def process_images(self, th, q):
+    #     # print('evaluating %d images on threshold %d with pid %d' % (num_img - lower_bound, th, getpid()))
+    #     PrecisionOverRecall = np.zeros((self.num_img_, 3, 3), dtype = np.float)
+    #     # for k in range(self.lower_bound_, self.num_img_):
+    #     #     PrecisionOverRecall[k] = self.process_image(i = k, q)
+    #     por = np.zeros((3, 2), dtype = np.float)
+    #     # calculates the mean of Precisions and Recall's over all images for each color channel and returns them without
+    #     # colour quota
+    #     por[0, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 0], axis = 0)[0:2]
+    #     por[2, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 2], axis = 0)[0:2]
+    #     # for the green channel the precision and recall is only estimated for images where the green quota is
+    #     # larger than 7% (value estimated by a scatter plot)
+    #     por[1, :] = np.mean(PrecisionOverRecall[PrecisionOverRecall[:, 1, 2] > 0.07, 1], axis = 0)[0:2]
+    #     # print('threshold %d done by pid: %d' % (th, getpid()))
+    #     q.put(por)
 
     def show_images(self, rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf):
         vis_gt = cv2.addWeighted(gt_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)

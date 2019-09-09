@@ -37,8 +37,18 @@ def preprocess_inference(inf, threshold):
     _, b = cv2.threshold(inf[:, :, 0], threshold[0], 255, cv2.THRESH_BINARY)
     _, g = cv2.threshold(inf[:, :, 1], threshold[1], 255, cv2.THRESH_BINARY)
     _, r = cv2.threshold(inf[:, :, 2], threshold[2], 255, cv2.THRESH_BINARY)
-    inf[:, :, 0] = b
-    inf[:, :, 1] = g
+    bg = np.logical_and(b, g)
+    gnb = np.logical_and(g, np.logical_not(bg))
+    gr = np.logical_and(g, r)
+    g = np.logical_xor(bg, gnb)
+    g = np.logical_and(g, np.logical_not(gr))
+    b = np.logical_and(np.logical_not(r), np.logical_not(g))
+
+    # br = np.logical_and(b, r)
+    # bnr = np.logical_and(b, np.logical_not(br))
+    # b = np.logical_xor(br, bnr)
+    inf[:, :, 0] = b * 255
+    inf[:, :, 1] = g * 255
     inf[:, :, 2] = r
     return inf
 
