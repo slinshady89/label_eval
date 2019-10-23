@@ -45,7 +45,6 @@ class Evaluator(object):
     def process_batch(self, q, begin, batch_size):
         prq = np.zeros((batch_size, 3, 3), dtype = np.float)
         for i in range(begin, begin + batch_size):
-            print('processing image %d' % i)
             prq[i - begin] = self.process_image(i)
         q.put(prq)
 
