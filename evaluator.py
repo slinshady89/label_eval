@@ -48,21 +48,6 @@ class Evaluator(object):
             prq[i - begin] = self.process_image(i)
         q.put(prq)
 
-    # def process_images(self, th, q):
-    #     # print('evaluating %d images on threshold %d with pid %d' % (num_img - lower_bound, th, getpid()))
-    #     PrecisionOverRecall = np.zeros((self.num_img_, 3, 3), dtype = np.float)
-    #     # for k in range(self.lower_bound_, self.num_img_):
-    #     #     PrecisionOverRecall[k] = self.process_image(i = k, q)
-    #     por = np.zeros((3, 2), dtype = np.float)
-    #     # calculates the mean of Precisions and Recall's over all images for each color channel and returns them without
-    #     # colour quota
-    #     por[0, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 0], axis = 0)[0:2]
-    #     por[2, :] = np.mean(PrecisionOverRecall[self.lower_bound_:self.num_img_, 2], axis = 0)[0:2]
-    #     # for the green channel the precision and recall is only estimated for images where the green quota is
-    #     # larger than 7% (value estimated by a scatter plot)
-    #     por[1, :] = np.mean(PrecisionOverRecall[PrecisionOverRecall[:, 1, 2] > 0.07, 1], axis = 0)[0:2]
-    #     # print('threshold %d done by pid: %d' % (th, getpid()))
-    #     q.put(por)
 
     def show_images(self, rgb_img, gt_label, inf_label, iou, recall, precision, quota_gt, quota_inf):
         vis_gt = cv2.addWeighted(gt_label / 255.0, 0.5, rgb_img / 255., 0.5, .0)

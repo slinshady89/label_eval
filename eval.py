@@ -12,9 +12,10 @@ base_dir = '/media/localadmin/Test/11Nils/kitti/dataset/sequences/'
 # base_dir = '/media/localadmin/Stick_Nils/indice_pooling/'
 # inf_dir = '20190808_160355/'
 # inf_dir = '20190730_170755/'
-inf_dir = '08/pooling_test/SegNet/'
-tested_name = '_SegNet'
-# inf_dir = 'Data/dagger/01/inf_08/'
+# inf_dir = '08/pooling_test/SegNet/'
+seq = '%02d' % 9
+tested_name = '_dag_' +seq
+inf_dir = 'Data/dagger/%s/inf_08/' % seq
 plotpng = '.png'
 plottex = '.tex'
 # inf_dir = '08/20190730_170755/'
@@ -130,8 +131,8 @@ def main():
                 linestyle = 'None',
                 marker = '.', markersize = 5)
     pyplot.legend()
-    pyplot.savefig(base_dir + 'por_path' + plotpng)
-    tikz.save(base_dir + 'por_path' + plottex)
+    pyplot.savefig(base_dir + 'por_path' + tested_name + plotpng)
+    tikz.save(base_dir + 'por_path' + tested_name + plottex)
     pyplot.show()
     pyplot.plot(prq[:, 0, 1], prq[:, 0, 0], color = 'r', label = 'objects', linestyle = 'None',
                 marker = '.', markersize = 1.5)
@@ -139,8 +140,8 @@ def main():
                 linestyle = 'None',
                 marker = '.', markersize = 5)
     pyplot.legend()
-    pyplot.savefig(base_dir + 'por_obj' + plotpng)
-    tikz.save(base_dir + 'por_obj' + plottex)
+    pyplot.savefig(base_dir + 'por_obj' + tested_name + plotpng)
+    tikz.save(base_dir + 'por_obj' + tested_name + plottex)
     pyplot.show()
     pyplot.plot(prq[:, 2, 1], prq[:, 2, 0], color = 'b', label = 'unknown', linestyle = 'None',
                 marker = '.', markersize = 1.5)
@@ -151,9 +152,23 @@ def main():
     tikz.save(base_dir + 'por_unknown' + tested_name + plottex)
     pyplot.legend()
     pyplot.show()
-    print('mean paths prec: %.3f | rec %.3f' % (np.mean(prq[:, 1, 1]), np.mean(prq[:, 1, 0])))
+    mean_prec_green = np.mean(prq[:, 1, 1])
+    mean_rec_green = np.mean(prq[:, 1, 0])
+    mean_prec_red = np.mean(prq[:, 0, 1])
+    mean_rec_red = np.mean(prq[:, 0, 0])
+    mean_prec_blue = np.mean(prq[:, 2, 1])
+    mean_rec_blue = np.mean(prq[:, 2, 0])
+    print('mean paths prec: %.3f | rec %.3f' % (mean_prec_green, mean_rec_green))
     print('mean obj prec: %.3f | rec %.3f' % (np.mean(prq[:, 0, 1]), np.mean(prq[:, 0, 0])))
     print('mean unknown prec: %.3f | rec %.3f' % (np.mean(prq[:, 2, 1]), np.mean(prq[:, 2, 0])))
+    f1_green = 2 * mean_prec_green *mean_rec_green/ (mean_rec_green+mean_prec_green)
+    f1_red = 2 * mean_prec_red *mean_rec_red/ (mean_rec_red+mean_prec_red)
+    f1_blue = 2 * mean_prec_blue *mean_rec_blue/ (mean_rec_blue+mean_prec_blue)
+
+    f1_scores = np.array([f1_green, f1_red, f1_blue])
+    np.savetxt(base_dir + 'f1_' + tested_name + '.txt', f1_scores)
+
+
 
     n, bins, patches = pyplot.hist(f1[:, 0], 50, facecolor = 'r')
     pyplot.xlabel('F1-Score')
